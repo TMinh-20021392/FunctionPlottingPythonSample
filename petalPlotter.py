@@ -162,13 +162,13 @@ Properties:
             
         elif formula_type == "rhodonea_sin":
             self.function_var.set("""Rhodonea (Sin) Formula:
-r = sin(k × θ)
+r = sin(k × θ) or r = |sin(k × θ)|
 
 Where:
 • r is the radius
 • θ is the angle
 • k is adjusted to ensure n petals:
-  - For even n: k = n/2
+  - For even n: k = n/2 (with absolute value)
   - For odd n: k = n
 
 Properties:
@@ -178,13 +178,13 @@ Properties:
             
         elif formula_type == "rhodonea_cos":
             self.function_var.set("""Rhodonea (Cos) Formula:
-r = cos(k × θ)
+r = cos(k × θ) or r = |cos(k × θ)|
 
 Where:
 • r is the radius
 • θ is the angle
 • k is adjusted to ensure n petals:
-  - For even n: k = n/2
+  - For even n: k = n/2 (with absolute value)
   - For odd n: k = n
 
 Properties:
