@@ -55,40 +55,52 @@ class PetalPlotterApp:
         apply_button = ttk.Button(petals_frame, text="Apply", command=self.on_apply)
         apply_button.grid(row=0, column=2, padx=(10, 0), sticky="e")
         
+        # Formula selection
+        formula_frame = ttk.LabelFrame(control_frame, text="Formula Type", padding=10)
+        formula_frame.grid(row=2, column=0, pady=(20, 0), sticky="ew")
+        
+        self.formula_type = tk.StringVar(value="spiral")
+        ttk.Radiobutton(formula_frame, text="Spiral Petal", 
+                         variable=self.formula_type, value="spiral",
+                         command=self.update_plot).grid(row=0, column=0, sticky="w")
+        ttk.Radiobutton(formula_frame, text="Classic Rose", 
+                         variable=self.formula_type, value="rose",
+                         command=self.update_plot).grid(row=1, column=0, sticky="w")
+        ttk.Radiobutton(formula_frame, text="Rhodonea (Exact Petals)", 
+                         variable=self.formula_type, value="rhodonea",
+                         command=self.update_plot).grid(row=2, column=0, sticky="w")
+        ttk.Radiobutton(formula_frame, text="Spiral Rhodonea", 
+                         variable=self.formula_type, value="spiral_rhodonea",
+                         command=self.update_plot).grid(row=3, column=0, sticky="w")
+        
         # Function description
         function_frame = ttk.LabelFrame(control_frame, text="Function Information", padding=10)
-        function_frame.grid(row=2, column=0, pady=(20, 0), sticky="ew")
+        function_frame.grid(row=3, column=0, pady=(20, 0), sticky="ew")
         
-        function_text = """Polar equation:
-r = θ × sin(n × θ)
-
-Where:
-• r is the radius
-• θ is the angle
-• n is the number of petals
-
-As θ increases, the pattern expands outward,
-creating a spiraling petal effect."""
-        
-        function_label = ttk.Label(function_frame, text=function_text, justify="left")
+        self.function_var = tk.StringVar(value="")
+        function_label = ttk.Label(function_frame, textvariable=self.function_var, justify="left")
         function_label.grid(row=0, column=0, sticky="w")
+        
+        # Update function text based on initial selection
+        self.update_function_text()
         
         # Instructions
         instructions_frame = ttk.LabelFrame(control_frame, text="Instructions", padding=10)
-        instructions_frame.grid(row=3, column=0, pady=(20, 0), sticky="ew")
+        instructions_frame.grid(row=4, column=0, pady=(20, 0), sticky="ew")
         
         instructions_text = """• Enter a whole number of petals (1-20)
 • Hold Ctrl + Mouse Scroll to zoom in/out
 • Right-click and drag to pan the view
 • Use toolbar buttons for additional controls
-• Double-click on the plot to reset the view"""
+• Double-click on the plot to reset the view
+• Try different formula types for various patterns"""
         
         instructions_label = ttk.Label(instructions_frame, text=instructions_text, justify="left")
         instructions_label.grid(row=0, column=0, sticky="w")
         
         # Reset Button
         reset_button = ttk.Button(control_frame, text="Reset View", command=self.reset_view)
-        reset_button.grid(row=4, column=0, pady=(20, 0), sticky="ew")
+        reset_button.grid(row=5, column=0, pady=(20, 0), sticky="ew")
 
     def create_plot_panel(self):
         # Create frame for the plot
@@ -117,13 +129,98 @@ creating a spiraling petal effect."""
         # Connect double-click event for resetting view
         self.canvas.mpl_connect('button_press_event', self.on_button_press)
 
+    def update_function_text(self):
+        if self.formula_type.get() == "spiral":
+            self.function_var.set("""Spiral Petal Formula:
+r = θ × sin(n × θ)
+
+Where:
+• r is the radius
+• θ is the angle
+• n is the coefficient
+
+Properties:
+• Odd n: creates n petals
+• Even n: creates 2n petals
+• Spirals outward as θ increases""")
+            
+        elif self.formula_type.get() == "rose":
+            self.function_var.set("""Classic Rose Formula:
+r = cos(n × θ)
+
+Where:
+• r is the radius
+• θ is the angle
+• n is the coefficient
+
+Properties:
+• Odd n: creates n petals
+• Even n: creates 2n petals
+• Fixed radius (bounded pattern)""")
+            
+        elif self.formula_type.get() == "rhodonea":
+            self.function_var.set("""Rhodonea Formula (Exact Petals):
+r = cos(k × θ)
+
+Where:
+• r is the radius
+• θ is the angle
+• k = n/2 for even n, k = n for odd n
+
+Properties:
+• Always creates exactly n petals
+• Fixed radius (bounded pattern)""")
+            
+        elif self.formula_type.get() == "spiral_rhodonea":
+            self.function_var.set("""Spiral Rhodonea Formula:
+r = θ × cos(k × θ)
+
+Where:
+• r is the radius
+• θ is the angle
+• k = n/2 for even n, k = n for odd n
+
+Properties:
+• Always creates exactly n petals
+• Spirals outward as θ increases""")
+
     def update_plot(self):
         # Clear the previous plot
         self.ax.clear()
         
-        # Calculate the curve
+        # Update function text
+        self.update_function_text()
+        
+        # Calculate the curve based on formula type
         theta = np.linspace(0, self.max_theta, self.n_points)
-        r = theta * np.sin(self.n_petals * theta)
+        
+        formula_type = self.formula_type.get()
+        
+        if formula_type == "spiral":
+            # Original spiral formula (no correction)
+            r = theta * np.sin(self.n_petals * theta)
+            title = f"Spiral Petal Pattern"
+            note = f"{self.n_petals} petals" if self.n_petals % 2 == 1 else f"{2*self.n_petals} petals"
+            
+        elif formula_type == "rose":
+            # Classic rose curve (no correction)
+            r = np.cos(self.n_petals * theta)
+            title = f"Classic Rose Pattern"
+            note = f"{self.n_petals} petals" if self.n_petals % 2 == 1 else f"{2*self.n_petals} petals"
+            
+        elif formula_type == "rhodonea":
+            # Rhodonea curve with exact petal count correction
+            k = self.n_petals if self.n_petals % 2 == 1 else self.n_petals / 2
+            r = np.cos(k * theta)
+            title = f"Rhodonea Pattern"
+            note = f"Exactly {self.n_petals} petals"
+            
+        elif formula_type == "spiral_rhodonea":
+            # Spiral rhodonea with exact petal count correction
+            k = self.n_petals if self.n_petals % 2 == 1 else self.n_petals / 2
+            r = theta * np.cos(k * theta)
+            title = f"Spiral Rhodonea Pattern"
+            note = f"Exactly {self.n_petals} petals"
         
         # Convert to Cartesian coordinates
         x = r * np.cos(theta)
@@ -133,14 +230,20 @@ creating a spiraling petal effect."""
         self.ax.plot(x, y, color='darkviolet', linewidth=1.5)
         
         # Set up the axis
-        self.ax.set_title(f"Flower Petal Pattern (n={self.n_petals})", fontsize=14)
+        self.ax.set_title(f"{title}\n({note})", fontsize=14)
         self.ax.set_aspect('equal')
         self.ax.grid(True, linestyle='--', alpha=0.7)
         
         # Get good limits based on the data
-        max_range = max(abs(np.max(x)), abs(np.min(x)), abs(np.max(y)), abs(np.min(y)))
-        self.ax.set_xlim(-max_range*1.1, max_range*1.1)
-        self.ax.set_ylim(-max_range*1.1, max_range*1.1)
+        if formula_type in ["spiral", "spiral_rhodonea"]:
+            # Expanding patterns
+            max_range = max(abs(np.max(x)), abs(np.min(x)), abs(np.max(y)), abs(np.min(y)))
+            self.ax.set_xlim(-max_range*1.1, max_range*1.1)
+            self.ax.set_ylim(-max_range*1.1, max_range*1.1)
+        else:
+            # Fixed radius patterns
+            self.ax.set_xlim(-1.5, 1.5)
+            self.ax.set_ylim(-1.5, 1.5)
         
         # Update the figure
         self.fig.tight_layout()
