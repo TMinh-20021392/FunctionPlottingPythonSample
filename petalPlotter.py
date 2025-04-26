@@ -218,15 +218,15 @@ Properties:
             
         elif formula_type == "rhodonea_sin":
             # Rhodonea curve with sin function - exact petal count
-            k = self.n_petals if self.n_petals % 2 == 1 else self.n_petals / 2
-            r = np.sin(k * theta)
+            k = self.n_petals
+            r = np.abs(np.sin(k * theta))
             title = "Rhodonea Pattern (Sin)"
             color = 'darkblue'
             
         elif formula_type == "rhodonea_cos":
             # Rhodonea curve with cos function - exact petal count
-            k = self.n_petals if self.n_petals % 2 == 1 else self.n_petals / 2
-            r = np.cos(k * theta)
+            k = self.n_petals
+            r = np.abs(np.cos(k * theta))
             title = "Rhodonea Pattern (Cos)"
             color = 'darkgreen'
         
