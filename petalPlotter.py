@@ -6,31 +6,18 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import matplotlib as mpl
 
-class PetalPlotterApp:
+from PlotApp import PlotApp
+
+class PetalPlotterApp(PlotApp):
     def __init__(self, root):
-        self.root = root
-        self.root.title("Interactive Petal Plotter")
-        self.root.state('zoomed')  # Make window full-screen on Windows
-        
         # Set default parameters
         self.n_petals = 3
         self.max_theta = 24 * np.pi
         self.n_points = 3000
-        self.face_radius = 0.2  # Default face radius value
+        self.face_radius = 1
         
-        # Configure the main window layout
-        self.root.columnconfigure(0, weight=1)  # Control panel
-        self.root.columnconfigure(1, weight=4)  # Plot area
-        self.root.rowconfigure(0, weight=1)
-        
-        # Create the left control panel
-        self.create_control_panel()
-        
-        # Create the right plot panel
-        self.create_plot_panel()
-        
-        # Initialize the plot
-        self.update_plot()
+        # Initialize the base class
+        super().__init__(root, "Interactive Petal Plotter")
 
     def create_control_panel(self):
         # Create frame for controls
@@ -114,33 +101,6 @@ class PetalPlotterApp:
         # Reset Button
         reset_button = ttk.Button(control_frame, text="Reset View", command=self.reset_view)
         reset_button.grid(row=7, column=0, pady=(20, 0), sticky="ew")
-
-    def create_plot_panel(self):
-        # Create frame for the plot
-        plot_frame = ttk.Frame(self.root)
-        plot_frame.grid(row=0, column=1, sticky="nsew")
-        plot_frame.columnconfigure(0, weight=1)
-        plot_frame.rowconfigure(0, weight=1)
-        plot_frame.rowconfigure(1, weight=0)
-        
-        # Create matplotlib figure and canvas
-        self.fig = Figure(figsize=(10, 8), dpi=100)
-        self.ax = self.fig.add_subplot(111)
-        
-        self.canvas = FigureCanvasTkAgg(self.fig, master=plot_frame)
-        self.canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
-        
-        # Add toolbar
-        toolbar_frame = ttk.Frame(plot_frame)
-        toolbar_frame.grid(row=1, column=0, sticky="ew")
-        toolbar = NavigationToolbar2Tk(self.canvas, toolbar_frame)
-        toolbar.update()
-        
-        # Connect scroll event for zooming
-        self.canvas.mpl_connect('scroll_event', self.on_scroll)
-        
-        # Connect double-click event for resetting view
-        self.canvas.mpl_connect('button_press_event', self.on_button_press)
 
     def update_function_text(self):
         formula_type = self.formula_type.get()
@@ -254,7 +214,6 @@ Properties:
                 r = np.abs(np.cos(k * theta)) + self.face_radius
             title = "Rhodonea Pattern (Cos)"
             color = 'darkgreen'
-
         
         # Convert to Cartesian coordinates
         x = r * np.cos(theta)
@@ -282,63 +241,42 @@ Properties:
         self.canvas.draw()
 
     def on_apply(self):
+        # Initialize variables to track if we need to update the plot
+        update_needed = False
+        
+        # Validate petal input - must be an integer between 1 and 20
         try:
-            # Validate petal input - must be an integer between 1 and 20
             petal_value = int(self.petals_var.get())
-            if petal_value < 1 or petal_value > 20:
-                messagebox.showerror("Invalid Input", "Please enter a whole number between 1 and 20 for petals.")
-                return
-            
-            # Validate face radius input - must be a float between 0 and 1
-            face_value = float(self.face_var.get())
-            if face_value < 0 or face_value > 1:
-                messagebox.showerror("Invalid Input", "Please enter a number between 0 and 1 for face radius.")
-                return
-                
+            if petal_value < 1:
+                petal_value = 1
+                self.petals_var.set(1)
+            elif petal_value > 20:
+                petal_value = 20
+                self.petals_var.set(20)
             self.n_petals = petal_value
-            self.face_radius = face_value
-            self.update_plot()
+            update_needed = True
         except ValueError:
-            messagebox.showerror("Invalid Input", "Please enter valid numbers.")
-
-    def on_scroll(self, event):
-        # Zoom with Ctrl+Scroll centered on mouse position
-        if event.key == 'control':
-            # Get the current x and y limits
-            cur_xlim = self.ax.get_xlim()
-            cur_ylim = self.ax.get_ylim()
-            
-            # Get event location
-            xdata = event.xdata
-            ydata = event.ydata
-            if xdata is None or ydata is None:
-                return
-                
-            # Get the directions
-            if event.button == 'up':
-                scale_factor = 0.9  # Zoom in
-            else:
-                scale_factor = 1.1  # Zoom out
-                
-            # Calculate new limits
-            new_width = (cur_xlim[1] - cur_xlim[0]) * scale_factor
-            new_height = (cur_ylim[1] - cur_ylim[0]) * scale_factor
-            
-            # Set new limits centered on mouse position
-            self.ax.set_xlim([xdata - new_width * (xdata - cur_xlim[0]) / (cur_xlim[1] - cur_xlim[0]),
-                             xdata + new_width * (cur_xlim[1] - xdata) / (cur_xlim[1] - cur_xlim[0])])
-            self.ax.set_ylim([ydata - new_height * (ydata - cur_ylim[0]) / (cur_ylim[1] - cur_ylim[0]),
-                             ydata + new_height * (cur_ylim[1] - ydata) / (cur_ylim[1] - cur_ylim[0])])
-            
-            self.canvas.draw()
-
-    def on_button_press(self, event):
-        # Double-click to reset view
-        if event.dblclick:
-            self.reset_view()
-
-    def reset_view(self):
-        self.update_plot()  # This resets the view by recalculating appropriate limits
+            # Handle case where petal input isn't a valid integer
+            petal_value = 1
+            self.petals_var.set(1)
+            self.n_petals = petal_value
+            update_needed = True
+        
+        # Validate face radius input
+        try:
+            face_value = float(self.face_var.get())
+            self.face_radius = face_value
+            update_needed = True
+        except ValueError:
+            # Handle case where face input isn't a valid float
+            face_value = 1.5
+            self.face_var.set(1.5)
+            self.face_radius = face_value
+            update_needed = True
+        
+        # Only update the plot if at least one input was valid or corrected
+        if update_needed:
+            self.update_plot()
 
 def main():
     # Configure matplotlib to use a more modern style
