@@ -73,7 +73,11 @@ in polar coordinates."""
         theta = np.linspace(0, self.max_theta, self.n_points)
         
         # Calculate r using the butterfly curve equation
-        r = np.exp(np.sin(theta)) - 2 * np.cos(4 * theta) + np.power(np.sin((2 * theta - np.pi) / 24), 5)
+        wing_frequency = 4 # Number of wings
+        wing_amplitude = 2 # Size of the wings
+        sine_stretch = 24 # Stretching factor
+
+        r = np.exp(np.sin(theta)) - wing_amplitude * np.cos(wing_frequency * theta) + np.power(np.sin((2 * theta - np.pi) / sine_stretch), 5)
         
         # Convert to Cartesian coordinates
         x = r * np.cos(theta)
