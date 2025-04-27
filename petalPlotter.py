@@ -88,7 +88,7 @@ class PetalPlotterApp(PlotApp):
         instructions_frame.grid(row=6, column=0, pady=(20, 0), sticky="ew")
         
         instructions_text = """• Enter a whole number of petals (1-20)
-• Enter face radius (0-1, affects rhodonea plots)
+• Enter face radius (affects rhodonea plots)
 • Hold Ctrl + Mouse Scroll to zoom in/out
 • Right-click and drag to pan the view
 • Use toolbar buttons for additional controls
