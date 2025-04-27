@@ -165,4 +165,10 @@ class PlotApp:
 
     def reset_view(self):
         """Reset the view to default"""
+        # Reset the view by updating the plot
         self.update_plot()
+        
+        # Reset the ax view limits to show the whole plot
+        self.ax.relim()  # Recalculate limits
+        self.ax.autoscale_view(True, True, True)  # Auto-scale the view
+        self.canvas.draw()  # Redraw the canvas

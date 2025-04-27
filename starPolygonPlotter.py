@@ -212,7 +212,18 @@ Examples:
         # Update the figure
         self.fig.tight_layout()
         self.canvas.draw()
-
+    def reset_view(self):
+        """Reset the view to default"""
+        # Reset parameters to default values
+        self.p = 5
+        self.q = 2
+        
+        # Update the UI to reflect default values
+        self.p_var.set(str(self.p))
+        self.q_var.set(str(self.q))
+        
+        # Update the plot with default values
+        self.update_plot()
 
 def main():
     # Configure matplotlib to use a more modern style

@@ -193,6 +193,20 @@ in polar coordinates."""
         self.fig.tight_layout()
         self.canvas.draw()
 
+    def reset_view(self):
+        """Reset the view to default"""
+        # Reset parameters to default values
+        self.wing_frequency = 4
+        self.wing_amplitude = 2
+        self.sine_stretch = 24
+        
+        # Update the UI to reflect default values
+        self.freq_var.set(str(self.wing_frequency))
+        self.amp_var.set(str(self.wing_amplitude))
+        self.stretch_var.set(str(self.sine_stretch))
+        
+        # Update the plot with default values
+        self.update_plot()
 
 def main():
     # Configure matplotlib to use a more modern style

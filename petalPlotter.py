@@ -326,7 +326,29 @@ Properties:
         # Only update the plot if at least one input was valid or corrected
         if update_needed:
             self.update_plot()
-
+    def reset_view(self):
+        """Reset the view to default"""
+        # Reset parameters to default values
+        self.n_petals = 3
+        self.face_radius = 1
+        
+        # Update the UI to reflect default values
+        self.petals_var.set(str(self.n_petals))
+        self.face_var.set(str(self.face_radius))
+        self.formula_type.set("spiral_sin")  # Reset to default formula
+        
+        # Show/hide face radius input based on formula type
+        if self.formula_type.get().startswith("rhodonea"):
+            self.face_frame.grid(row=2, column=0, columnspan=2, pady=(0, 10), sticky="ew")
+        else:
+            self.face_frame.grid_forget()
+        
+        # Update function text and instructions
+        self.update_function_text()
+        self.update_instructions()
+        
+        # Update the plot with default values
+        self.update_plot()
 
 def main():
     # Configure matplotlib to use a more modern style
