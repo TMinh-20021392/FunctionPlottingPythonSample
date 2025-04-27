@@ -303,7 +303,7 @@ Properties:
             update_needed = True
         except ValueError:
             # Handle case where petal input isn't a valid integer
-            self.n_petals = 3  # Reset to default
+            self.n_petals = 3
             self.petals_var.set("3")
             update_needed = True
         
@@ -319,7 +319,7 @@ Properties:
                 update_needed = True
             except ValueError:
                 # Handle case where face input isn't a valid float
-                self.face_radius = 1  # Reset to default
+                self.face_radius = 1
                 self.face_var.set("1")
                 update_needed = True
         
