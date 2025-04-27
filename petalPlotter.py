@@ -16,6 +16,7 @@ class PetalPlotterApp:
         self.n_petals = 3
         self.max_theta = 24 * np.pi
         self.n_points = 3000
+        self.face_radius = 0.2  # Default face radius value
         
         # Configure the main window layout
         self.root.columnconfigure(0, weight=1)  # Control panel
@@ -52,12 +53,23 @@ class PetalPlotterApp:
         self.petals_entry = ttk.Entry(petals_frame, textvariable=self.petals_var, width=10)
         self.petals_entry.grid(row=0, column=1, padx=(10, 0), sticky="e")
         
-        apply_button = ttk.Button(petals_frame, text="Apply", command=self.on_apply)
-        apply_button.grid(row=0, column=2, padx=(10, 0), sticky="e")
+        # Input for face radius
+        face_frame = ttk.Frame(control_frame)
+        face_frame.grid(row=2, column=0, pady=(0, 10), sticky="ew")
+        
+        face_label = ttk.Label(face_frame, text="Face Radius:")
+        face_label.grid(row=0, column=0, sticky="w")
+        
+        self.face_var = tk.StringVar(value=str(self.face_radius))
+        self.face_entry = ttk.Entry(face_frame, textvariable=self.face_var, width=10)
+        self.face_entry.grid(row=0, column=1, padx=(10, 0), sticky="e")
+        
+        apply_button = ttk.Button(control_frame, text="Apply", command=self.on_apply)
+        apply_button.grid(row=3, column=0, padx=(10, 0), pady=(0, 10), sticky="e")
         
         # Formula selection
         formula_frame = ttk.LabelFrame(control_frame, text="Formula Type", padding=10)
-        formula_frame.grid(row=2, column=0, pady=(20, 0), sticky="ew")
+        formula_frame.grid(row=4, column=0, pady=(20, 0), sticky="ew")
         
         self.formula_type = tk.StringVar(value="spiral_sin")
         ttk.Radiobutton(formula_frame, text="Spiral Petal (Sin)", 
@@ -75,7 +87,7 @@ class PetalPlotterApp:
         
         # Function description
         function_frame = ttk.LabelFrame(control_frame, text="Function Information", padding=10)
-        function_frame.grid(row=3, column=0, pady=(20, 0), sticky="ew")
+        function_frame.grid(row=5, column=0, pady=(20, 0), sticky="ew")
         
         self.function_var = tk.StringVar(value="")
         function_label = ttk.Label(function_frame, textvariable=self.function_var, justify="left")
@@ -86,9 +98,10 @@ class PetalPlotterApp:
         
         # Instructions
         instructions_frame = ttk.LabelFrame(control_frame, text="Instructions", padding=10)
-        instructions_frame.grid(row=4, column=0, pady=(20, 0), sticky="ew")
+        instructions_frame.grid(row=6, column=0, pady=(20, 0), sticky="ew")
         
         instructions_text = """• Enter a whole number of petals (1-20)
+• Enter face radius (0-1, affects rhodonea plots)
 • Hold Ctrl + Mouse Scroll to zoom in/out
 • Right-click and drag to pan the view
 • Use toolbar buttons for additional controls
@@ -100,7 +113,7 @@ class PetalPlotterApp:
         
         # Reset Button
         reset_button = ttk.Button(control_frame, text="Reset View", command=self.reset_view)
-        reset_button.grid(row=5, column=0, pady=(20, 0), sticky="ew")
+        reset_button.grid(row=7, column=0, pady=(20, 0), sticky="ew")
 
     def create_plot_panel(self):
         # Create frame for the plot
@@ -162,7 +175,7 @@ Properties:
             
         elif formula_type == "rhodonea_sin":
             self.function_var.set("""Rhodonea (Sin) Formula:
-r = sin(k × θ) or r = |sin(k × θ)|
+r = sin(k × θ) + face_radius
 
 Where:
 • r is the radius
@@ -170,15 +183,17 @@ Where:
 • k is adjusted to ensure n petals:
   - For even n: k = n/2 (with absolute value)
   - For odd n: k = n
+• face_radius is the central area size
 
 Properties:
 • Always creates exactly n petals
 • Fixed radius (bounded pattern)
-• Uses sine function for calculation""")
+• Uses sine function for calculation
+• Face radius adds a central area""")
             
         elif formula_type == "rhodonea_cos":
             self.function_var.set("""Rhodonea (Cos) Formula:
-r = cos(k × θ) or r = |cos(k × θ)|
+r = cos(k × θ) + face_radius
 
 Where:
 • r is the radius
@@ -186,11 +201,13 @@ Where:
 • k is adjusted to ensure n petals:
   - For even n: k = n/2 (with absolute value)
   - For odd n: k = n
+• face_radius is the central area size
 
 Properties:
 • Always creates exactly n petals
 • Fixed radius (bounded pattern)
-• Uses cosine function for calculation""")
+• Uses cosine function for calculation
+• Face radius adds a central area""")
 
     def update_plot(self):
         # Clear the previous plot
@@ -221,10 +238,10 @@ Properties:
             k = self.n_petals if self.n_petals % 2 == 1 else self.n_petals / 2
             if self.n_petals % 2 == 1:
                 # odd: sin(kθ) gives k petals
-                r = np.sin(k * theta)
+                r = np.sin(k * theta) + self.face_radius
             else:
                 # even: use abs to fold negative radii back, giving k*2 = n petals
-                r = np.abs(np.sin(k * theta))
+                r = np.abs(np.sin(k * theta)) + self.face_radius
             title = "Rhodonea Pattern (Sin)"
             color = 'darkblue'
 
@@ -232,9 +249,9 @@ Properties:
             # Rhodonea curve with cos function - exact petal count
             k = self.n_petals if self.n_petals % 2 == 1 else self.n_petals / 2
             if self.n_petals % 2 == 1:
-                r = np.cos(k * theta)
+                r = np.cos(k * theta) + self.face_radius
             else:
-                r = np.abs(np.cos(k * theta))
+                r = np.abs(np.cos(k * theta)) + self.face_radius
             title = "Rhodonea Pattern (Cos)"
             color = 'darkgreen'
 
@@ -247,20 +264,18 @@ Properties:
         self.ax.plot(x, y, color=color, linewidth=1.5)
         
         # Set up the axis
-        self.ax.set_title(f"{title}\n(Exactly {self.n_petals} petals)", fontsize=14)
+        face_info = ""
+        if formula_type.startswith("rhodonea"):
+            face_info = f", Face Radius: {self.face_radius}"
+        
+        self.ax.set_title(f"{title}\n(Exactly {self.n_petals} petals{face_info})", fontsize=14)
         self.ax.set_aspect('equal')
         self.ax.grid(True, linestyle='--', alpha=0.7)
         
         # Get good limits based on the data
-        if formula_type in ["spiral_sin", "spiral_cos"]:
-            # Expanding patterns
-            max_range = max(abs(np.max(x)), abs(np.min(x)), abs(np.max(y)), abs(np.min(y)))
-            self.ax.set_xlim(-max_range*1.1, max_range*1.1)
-            self.ax.set_ylim(-max_range*1.1, max_range*1.1)
-        else:
-            # Fixed radius patterns
-            self.ax.set_xlim(-1.5, 1.5)
-            self.ax.set_ylim(-1.5, 1.5)
+        max_range = max(abs(np.max(x)), abs(np.min(x)), abs(np.max(y)), abs(np.min(y)))
+        self.ax.set_xlim(-max_range*1.1, max_range*1.1)
+        self.ax.set_ylim(-max_range*1.1, max_range*1.1)
         
         # Update the figure
         self.fig.tight_layout()
@@ -268,16 +283,23 @@ Properties:
 
     def on_apply(self):
         try:
-            # Validate input - must be an integer between 1 and 20
-            value = int(self.petals_var.get())
-            if value < 1 or value > 20:
-                messagebox.showerror("Invalid Input", "Please enter a whole number between 1 and 20.")
+            # Validate petal input - must be an integer between 1 and 20
+            petal_value = int(self.petals_var.get())
+            if petal_value < 1 or petal_value > 20:
+                messagebox.showerror("Invalid Input", "Please enter a whole number between 1 and 20 for petals.")
+                return
+            
+            # Validate face radius input - must be a float between 0 and 1
+            face_value = float(self.face_var.get())
+            if face_value < 0 or face_value > 1:
+                messagebox.showerror("Invalid Input", "Please enter a number between 0 and 1 for face radius.")
                 return
                 
-            self.n_petals = value
+            self.n_petals = petal_value
+            self.face_radius = face_value
             self.update_plot()
         except ValueError:
-            messagebox.showerror("Invalid Input", "Please enter a valid whole number.")
+            messagebox.showerror("Invalid Input", "Please enter valid numbers.")
 
     def on_scroll(self, event):
         # Zoom with Ctrl+Scroll centered on mouse position
