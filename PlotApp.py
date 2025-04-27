@@ -1,8 +1,7 @@
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
-
-
 from tkinter import ttk
+import tkinter as tk
 
 
 class PlotApp:
@@ -22,16 +21,81 @@ class PlotApp:
         self.ax = self.fig.add_subplot(111)
 
         # Create the UI components
-        self.create_control_panel()
+        self.create_scrollable_control_panel()
         self.create_plot_panel()
 
         # Initialize the plot
         self.update_plot()
 
+    def create_scrollable_control_panel(self):
+        """Create the left side scrollable control panel"""
+        # Create the main control frame that will contain the canvas and scrollbar
+        self.main_control_frame = ttk.Frame(self.root)
+        self.main_control_frame.grid(row=0, column=0, sticky="nsew")
+        self.main_control_frame.columnconfigure(0, weight=1)
+        self.main_control_frame.rowconfigure(0, weight=1)
+        
+        # Create a canvas with scrollbar
+        self.control_canvas = tk.Canvas(self.main_control_frame)
+        self.control_canvas.grid(row=0, column=0, sticky="nsew")
+        
+        # Add scrollbar
+        self.scrollbar = ttk.Scrollbar(self.main_control_frame, orient="vertical", command=self.control_canvas.yview)
+        self.scrollbar.grid(row=0, column=1, sticky="ns")
+        self.control_canvas.configure(yscrollcommand=self.scrollbar.set)
+        
+        # Create frame for controls inside the canvas
+        self.control_frame = ttk.Frame(self.control_canvas, padding="10")
+        self.control_frame.columnconfigure(0, weight=1)
+        
+        # Create a window in the canvas to hold the control frame
+        self.canvas_window = self.control_canvas.create_window((0, 0), window=self.control_frame, anchor="nw", width=self.control_canvas.winfo_reqwidth())
+        
+        # Configure the canvas to resize with the window and update scrollregion
+        self.control_canvas.bind('<Configure>', self._configure_canvas)
+        self.control_frame.bind('<Configure>', self._update_scrollregion)
+        
+        # Bind mousewheel for scrolling - improve to work on all elements
+        self._bind_mousewheel_recursive(self.main_control_frame)
+        
+        # Now derived classes can add their controls to self.control_frame
+        self.create_control_panel()
+    
     def create_control_panel(self):
-        """Create the left side control panel"""
-        # This should be implemented by derived classes
+        """Create the controls inside the scrollable panel - to be implemented by derived classes"""
         pass
+
+    def _configure_canvas(self, event):
+        # Update the width of the canvas window when the canvas is resized
+        if self.control_canvas.winfo_width() > 1:  # Check if width is valid
+            self.control_canvas.itemconfig(self.canvas_window, width=self.control_canvas.winfo_width())
+    
+    def _update_scrollregion(self, event):
+        # Update the scrollregion to encompass the inner frame
+        self.control_canvas.configure(scrollregion=self.control_canvas.bbox("all"))
+    
+    def _bind_mousewheel_recursive(self, widget):
+        """Recursively bind mousewheel events to all widgets in the control panel"""
+        # Bind to this widget
+        self._bind_mousewheel_to_widget(widget)
+        
+        # Recursively bind to all children
+        for child in widget.winfo_children():
+            self._bind_mousewheel_recursive(child)
+    
+    def _bind_mousewheel_to_widget(self, widget):
+        """Bind mousewheel events to a specific widget"""
+        widget.bind("<MouseWheel>", self._on_mousewheel)  # Windows and MacOS
+        widget.bind("<Button-4>", self._on_mousewheel)    # Linux
+        widget.bind("<Button-5>", self._on_mousewheel)    # Linux
+    
+    def _on_mousewheel(self, event):
+        """Handle mouse wheel scrolling"""
+        # Different delta calculation for different platforms
+        if event.num == 5 or event.delta < 0:
+            self.control_canvas.yview_scroll(1, "units")
+        elif event.num == 4 or event.delta > 0:
+            self.control_canvas.yview_scroll(-1, "units")
 
     def create_plot_panel(self):
         """Create the right side plot panel"""

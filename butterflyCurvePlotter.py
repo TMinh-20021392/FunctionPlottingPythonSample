@@ -21,17 +21,12 @@ class ButterflyPlotterApp(PlotApp):
         super().__init__(root, "Butterfly Curve Plotter")
 
     def create_control_panel(self):
-        # Create frame for controls
-        control_frame = ttk.Frame(self.root, padding="10")
-        control_frame.grid(row=0, column=0, sticky="nsew")
-        control_frame.columnconfigure(0, weight=1)
-        
         # Title
-        title_label = ttk.Label(control_frame, text="Butterfly Curve Plotter", font=("Arial", 16, "bold"))
+        title_label = ttk.Label(self.control_frame, text="Butterfly Curve Plotter", font=("Arial", 16, "bold"))
         title_label.grid(row=0, column=0, pady=(0, 20), sticky="w")
         
         # Parameters frame
-        params_frame = ttk.LabelFrame(control_frame, text="Curve Parameters", padding=10)
+        params_frame = ttk.LabelFrame(self.control_frame, text="Curve Parameters", padding=10)
         params_frame.grid(row=1, column=0, pady=(0, 20), sticky="ew")
         params_frame.columnconfigure(0, weight=1)
         params_frame.columnconfigure(1, weight=1)
@@ -74,7 +69,7 @@ class ButterflyPlotterApp(PlotApp):
         apply_button.grid(row=6, column=0, columnspan=2, sticky="ew", pady=(10, 0))
         
         # Equation information
-        equation_frame = ttk.LabelFrame(control_frame, text="Equation Information", padding=10)
+        equation_frame = ttk.LabelFrame(self.control_frame, text="Equation Information", padding=10)
         equation_frame.grid(row=2, column=0, pady=(0, 20), sticky="ew")
         
         equation_text = """Butterfly Curve Equation:
@@ -97,7 +92,7 @@ in polar coordinates."""
         equation_label.grid(row=0, column=0, sticky="w")
         
         # Instructions
-        instructions_frame = ttk.LabelFrame(control_frame, text="Instructions", padding=10)
+        instructions_frame = ttk.LabelFrame(self.control_frame, text="Instructions", padding=10)
         instructions_frame.grid(row=3, column=0, pady=(0, 20), sticky="ew")
         
         instructions_text = """• Adjust parameters to customize the butterfly shape
@@ -110,11 +105,11 @@ in polar coordinates."""
         instructions_label.grid(row=0, column=0, sticky="w")
         
         # Reset Button
-        reset_button = ttk.Button(control_frame, text="Reset View", command=self.reset_view)
+        reset_button = ttk.Button(self.control_frame, text="Reset View", command=self.reset_view)
         reset_button.grid(row=4, column=0, pady=(0, 20), sticky="ew")
         
         # Add some spacing at the bottom
-        spacer = ttk.Label(control_frame, text="")
+        spacer = ttk.Label(self.control_frame, text="")
         spacer.grid(row=5, column=0, sticky="ew")
 
     def on_apply(self):

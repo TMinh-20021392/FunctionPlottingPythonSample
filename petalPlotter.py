@@ -20,34 +20,13 @@ class PetalPlotterApp(PlotApp):
         super().__init__(root, "Interactive Petal Plotter")
 
     def create_control_panel(self):
-        # Create the main control frame that will contain the canvas and scrollbar
-        main_control_frame = ttk.Frame(self.root)
-        main_control_frame.grid(row=0, column=0, sticky="nsew")
-        main_control_frame.columnconfigure(0, weight=1)
-        main_control_frame.rowconfigure(0, weight=1)
-        
-        # Create a canvas with scrollbar
-        self.control_canvas = tk.Canvas(main_control_frame)
-        self.control_canvas.grid(row=0, column=0, sticky="nsew")
-        
-        # Add scrollbar
-        scrollbar = ttk.Scrollbar(main_control_frame, orient="vertical", command=self.control_canvas.yview)
-        scrollbar.grid(row=0, column=1, sticky="ns")
-        self.control_canvas.configure(yscrollcommand=scrollbar.set)
-        
-        # Create frame for controls inside the canvas
-        control_frame = ttk.Frame(self.control_canvas, padding="10")
-        control_frame.columnconfigure(0, weight=1)
-        
-        # Create a window in the canvas to hold the control frame
-        self.canvas_window = self.control_canvas.create_window((0, 0), window=control_frame, anchor="nw", width=self.control_canvas.winfo_reqwidth())
-        
+        """Create the content for the scrollable control panel"""
         # Title
-        title_label = ttk.Label(control_frame, text="Petal Plotter Controls", font=("Arial", 16, "bold"))
+        title_label = ttk.Label(self.control_frame, text="Petal Plotter Controls", font=("Arial", 16, "bold"))
         title_label.grid(row=0, column=0, pady=(0, 20), sticky="w")
         
         # Input for number of petals
-        params_frame = ttk.LabelFrame(control_frame, text="Plot Parameters", padding=10)
+        params_frame = ttk.LabelFrame(self.control_frame, text="Plot Parameters", padding=10)
         params_frame.grid(row=1, column=0, pady=(0, 20), sticky="ew")
         params_frame.columnconfigure(0, weight=1)
         params_frame.columnconfigure(1, weight=1)
@@ -84,7 +63,7 @@ class PetalPlotterApp(PlotApp):
         apply_button.grid(row=3, column=0, columnspan=2, padx=(0, 0), pady=(5, 0), sticky="ew")
         
         # Formula selection
-        formula_frame = ttk.LabelFrame(control_frame, text="Formula Type", padding=10)
+        formula_frame = ttk.LabelFrame(self.control_frame, text="Formula Type", padding=10)
         formula_frame.grid(row=2, column=0, pady=(0, 20), sticky="ew")
         
         self.formula_type = tk.StringVar(value="spiral_sin")
@@ -102,7 +81,7 @@ class PetalPlotterApp(PlotApp):
                          command=self.on_formula_change).grid(row=3, column=0, sticky="w", pady=(0, 5))
         
         # Function description
-        function_frame = ttk.LabelFrame(control_frame, text="Function Information", padding=10)
+        function_frame = ttk.LabelFrame(self.control_frame, text="Function Information", padding=10)
         function_frame.grid(row=3, column=0, pady=(0, 20), sticky="ew")
         
         self.function_var = tk.StringVar(value="")
@@ -110,7 +89,7 @@ class PetalPlotterApp(PlotApp):
         function_label.grid(row=0, column=0, sticky="w")
         
         # Instructions
-        instructions_frame = ttk.LabelFrame(control_frame, text="Instructions", padding=10)
+        instructions_frame = ttk.LabelFrame(self.control_frame, text="Instructions", padding=10)
         instructions_frame.grid(row=4, column=0, pady=(0, 20), sticky="ew")
         
         self.instructions_var = tk.StringVar()
@@ -118,7 +97,7 @@ class PetalPlotterApp(PlotApp):
         instructions_label.grid(row=0, column=0, sticky="w")
         
         # Reset Button
-        reset_button = ttk.Button(control_frame, text="Reset View", command=self.reset_view)
+        reset_button = ttk.Button(self.control_frame, text="Reset View", command=self.reset_view)
         reset_button.grid(row=5, column=0, pady=(0, 0), sticky="ew")
         
         # Initially update the function text and instructions
@@ -130,35 +109,6 @@ class PetalPlotterApp(PlotApp):
         if not formula_type.startswith("rhodonea"):
             # Hide face radius for spiral curves
             self.face_frame.grid_forget()
-            
-        # Configure the canvas to resize with the window and update scrollregion
-        self.control_canvas.bind('<Configure>', self._configure_canvas)
-        control_frame.bind('<Configure>', self._update_scrollregion)
-        
-        # Bind mousewheel for scrolling
-        self.bind_mousewheel(self.control_canvas)
-        
-    def _configure_canvas(self, event):
-        # Update the width of the canvas window when the canvas is resized
-        if self.control_canvas.winfo_width() > 1:  # Check if width is valid
-            self.control_canvas.itemconfig(self.canvas_window, width=self.control_canvas.winfo_width())
-    
-    def _update_scrollregion(self, event):
-        # Update the scrollregion to encompass the inner frame
-        self.control_canvas.configure(scrollregion=self.control_canvas.bbox("all"))
-        
-    def bind_mousewheel(self, widget):
-        # Bind mouse wheel events to the canvas for scrolling
-        widget.bind("<MouseWheel>", self._on_mousewheel)  # Windows and MacOS
-        widget.bind("<Button-4>", self._on_mousewheel)    # Linux
-        widget.bind("<Button-5>", self._on_mousewheel)    # Linux
-        
-    def _on_mousewheel(self, event):
-        # Handle mouse wheel scrolling
-        if event.num == 5 or event.delta < 0:
-            self.control_canvas.yview_scroll(1, "units")
-        elif event.num == 4 or event.delta > 0:
-            self.control_canvas.yview_scroll(-1, "units")
 
     def on_formula_change(self):
         """Handle formula type change - update UI elements"""
@@ -376,6 +326,7 @@ Properties:
         # Only update the plot if at least one input was valid or corrected
         if update_needed:
             self.update_plot()
+
 
 def main():
     # Configure matplotlib to use a more modern style
