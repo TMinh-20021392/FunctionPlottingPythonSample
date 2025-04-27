@@ -20,10 +20,27 @@ class PetalPlotterApp(PlotApp):
         super().__init__(root, "Interactive Petal Plotter")
 
     def create_control_panel(self):
-        # Create frame for controls
-        control_frame = ttk.Frame(self.root, padding="10")
-        control_frame.grid(row=0, column=0, sticky="nsew")
+        # Create the main control frame that will contain the canvas and scrollbar
+        main_control_frame = ttk.Frame(self.root)
+        main_control_frame.grid(row=0, column=0, sticky="nsew")
+        main_control_frame.columnconfigure(0, weight=1)
+        main_control_frame.rowconfigure(0, weight=1)
+        
+        # Create a canvas with scrollbar
+        self.control_canvas = tk.Canvas(main_control_frame)
+        self.control_canvas.grid(row=0, column=0, sticky="nsew")
+        
+        # Add scrollbar
+        scrollbar = ttk.Scrollbar(main_control_frame, orient="vertical", command=self.control_canvas.yview)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+        self.control_canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Create frame for controls inside the canvas
+        control_frame = ttk.Frame(self.control_canvas, padding="10")
         control_frame.columnconfigure(0, weight=1)
+        
+        # Create a window in the canvas to hold the control frame
+        self.canvas_window = self.control_canvas.create_window((0, 0), window=control_frame, anchor="nw", width=self.control_canvas.winfo_reqwidth())
         
         # Title
         title_label = ttk.Label(control_frame, text="Petal Plotter Controls", font=("Arial", 16, "bold"))
@@ -59,7 +76,7 @@ class PetalPlotterApp(PlotApp):
         self.face_entry = ttk.Entry(self.face_frame, textvariable=self.face_var, width=10)
         self.face_entry.grid(row=0, column=1, padx=(10, 0), sticky="e")
         
-        face_info = ttk.Label(self.face_frame, text="(Controls central area size, 0-2)")
+        face_info = ttk.Label(self.face_frame, text="(Controls central area size)")
         face_info.grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 5))
         
         # Apply button
@@ -113,6 +130,35 @@ class PetalPlotterApp(PlotApp):
         if not formula_type.startswith("rhodonea"):
             # Hide face radius for spiral curves
             self.face_frame.grid_forget()
+            
+        # Configure the canvas to resize with the window and update scrollregion
+        self.control_canvas.bind('<Configure>', self._configure_canvas)
+        control_frame.bind('<Configure>', self._update_scrollregion)
+        
+        # Bind mousewheel for scrolling
+        self.bind_mousewheel(self.control_canvas)
+        
+    def _configure_canvas(self, event):
+        # Update the width of the canvas window when the canvas is resized
+        if self.control_canvas.winfo_width() > 1:  # Check if width is valid
+            self.control_canvas.itemconfig(self.canvas_window, width=self.control_canvas.winfo_width())
+    
+    def _update_scrollregion(self, event):
+        # Update the scrollregion to encompass the inner frame
+        self.control_canvas.configure(scrollregion=self.control_canvas.bbox("all"))
+        
+    def bind_mousewheel(self, widget):
+        # Bind mouse wheel events to the canvas for scrolling
+        widget.bind("<MouseWheel>", self._on_mousewheel)  # Windows and MacOS
+        widget.bind("<Button-4>", self._on_mousewheel)    # Linux
+        widget.bind("<Button-5>", self._on_mousewheel)    # Linux
+        
+    def _on_mousewheel(self, event):
+        # Handle mouse wheel scrolling
+        if event.num == 5 or event.delta < 0:
+            self.control_canvas.yview_scroll(1, "units")
+        elif event.num == 4 or event.delta > 0:
+            self.control_canvas.yview_scroll(-1, "units")
 
     def on_formula_change(self):
         """Handle formula type change - update UI elements"""
@@ -148,7 +194,7 @@ class PetalPlotterApp(PlotApp):
 
         # Add face radius instructions only for rhodonea curves
         if formula_type.startswith("rhodonea"):
-            rhodonea_instructions = """• Enter face radius (0-2, affects central area)"""
+            rhodonea_instructions = """• Enter face radius (affects central area)"""
             full_instructions = base_instructions.split("\n")
             full_instructions.insert(1, rhodonea_instructions)  # Insert after first line
             self.instructions_var.set("\n".join(full_instructions))
@@ -319,9 +365,6 @@ Properties:
                 if face_value < 0:
                     face_value = 0
                     self.face_var.set("0")
-                elif face_value > 2:
-                    face_value = 2
-                    self.face_var.set("2")
                 self.face_radius = face_value
                 update_needed = True
             except ValueError:
